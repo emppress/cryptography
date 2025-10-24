@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(GTest REQUIRED)
 enable_testing()
-
+add_subdirectory(des_deal)
 add_subdirectory(rsa)
 
 
