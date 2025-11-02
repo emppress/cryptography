@@ -3,20 +3,11 @@ target_include_directories(libdes_deal_include INTERFACE
         include
 )
 
-add_library(libutils
-        src/bit_operations.cpp
-        src/block_operations.cpp)
-target_link_libraries(libutils PUBLIC libdes_deal_include)
-
 add_library(libfeistel src/feistel_network.cpp)
-target_link_libraries(libfeistel PUBLIC libdes_deal_include)
-
-add_library(libcrypto_context
-        src/context.cpp)
-target_link_libraries(libcrypto_context PUBLIC libdes_deal_include)
+target_link_libraries(libfeistel PUBLIC libdes_deal_include interfaces)
 
 add_library(libdes src/des.cpp)
-target_link_libraries(libdes PUBLIC libfeistel libcrypto_context libutils)
+target_link_libraries(libdes PUBLIC libfeistel libcrypto_context)
 
 add_library(libdeal src/deal.cpp)
 target_link_libraries(libdeal PUBLIC libdes)

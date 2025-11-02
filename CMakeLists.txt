@@ -8,6 +8,11 @@ find_package(GTest REQUIRED)
 enable_testing()
 add_subdirectory(des_deal)
 add_subdirectory(rsa)
+add_subdirectory(rijndael)
+add_subdirectory(crypto_context)
+add_subdirectory(utils)
 
+add_library(interfaces INTERFACE)
+target_include_directories(interfaces INTERFACE ./interfaces)
 
 
