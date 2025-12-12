@@ -3,11 +3,16 @@
 
 #include "interfaces.h"
 #include "feistel_network.h"
+#include "unordered_map"
 #include "des.h"
 
 
 namespace crypto::deal {
     class DESAdapter final : public IEncryptionTransform {
+        friend class DEALCipher;
+
+        mutable std::unordered_map<uint64_t, des::DESCipher> _des_cyphers;
+
     public:
         std::vector<uint8_t> transform(std::span<const uint8_t> input_block,
                                        std::span<const uint8_t> round_key) const override;

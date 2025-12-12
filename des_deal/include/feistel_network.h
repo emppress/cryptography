@@ -9,7 +9,7 @@
 
 namespace crypto {
     class FeistelNetwork : public ISymmetricAlgorithm {
-    private:
+    protected:
         std::unique_ptr<IKeyExpansion> _key_expansion;
         std::unique_ptr<IEncryptionTransform> _round_function;
         std::vector<std::vector<uint8_t> > _round_keys;
@@ -25,6 +25,10 @@ namespace crypto {
         FeistelNetwork(const FeistelNetwork &) = delete;
 
         FeistelNetwork &operator=(const FeistelNetwork &) = delete;
+
+        FeistelNetwork(FeistelNetwork &&) = default;
+
+        FeistelNetwork &operator=(FeistelNetwork &&) = default;
 
         void set_round_keys(std::span<const uint8_t> encryption_key) override;
 

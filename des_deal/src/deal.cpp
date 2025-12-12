@@ -4,9 +4,18 @@ static const uint8_t expansion_key[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD
 
 std::vector<uint8_t> crypto::deal::DESAdapter::transform(std::span<const uint8_t> input_block,
                                                          std::span<const uint8_t> round_key) const {
-    des::DESCipher des;
-    des.set_round_keys(round_key);
-    return des.encrypt(input_block);
+    uint64_t key{};
+    for (auto byte: round_key) {
+        key = (key << 8) | byte;
+    }
+    auto des_it = _des_cyphers.find(key);
+    if (des_it == _des_cyphers.end()) {
+        des::DESCipher des;
+        des.set_round_keys(round_key);
+        des_it = _des_cyphers.emplace(key, std::move(des)).first;
+    }
+
+    return des_it->second.encrypt(input_block);
 }
 
 std::vector<std::vector<uint8_t> > crypto::deal::DEALKeyExpansion::generate_round_keys(
@@ -52,6 +61,7 @@ std::vector<std::vector<uint8_t> > crypto::deal::DEALKeyExpansion::generate_roun
 
 void crypto::deal::DEALCipher::set_round_keys(std::span<const uint8_t> encryption_key) {
     set_rounds_count(encryption_key.size() == 16 ? 6 : 8);
+    static_cast<DESAdapter *>(_round_function.get())->_des_cyphers.clear();
     FeistelNetwork::set_round_keys(encryption_key);
 }
 

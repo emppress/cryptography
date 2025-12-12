@@ -1,6 +1,7 @@
 #include "rsa.h"
 
 #include <bitset>
+#include <fstream>
 #include <future>
 
 #include "primary_tests.h"
@@ -30,6 +31,85 @@ namespace crypto::rsa {
             throw std::invalid_argument("data >= mod");
         return math::mod_pow(data, _key_pair.privateKey.exponent, _key_pair.privateKey.modulus);
     }
+
+    std::future<void> RSACryptoService::encrypt(const std::filesystem::path &in_path,
+                                                const std::filesystem::path &out_path) const {
+        std::ifstream in(in_path, std::ios::binary);
+        std::ofstream out(out_path, std::ios::binary);
+
+        if (!in.is_open())
+            throw std::invalid_argument("failed to open input file");
+        if (!out.is_open())
+            throw std::invalid_argument("failed to open output file");
+
+        auto task = [key = get_public_key(), in = std::move(in), out = std::move(out)]() mutable {
+            auto buf_size = (mp::msb(key.modulus) + 1) / 8;
+            std::vector<uint8_t> buf(buf_size);
+
+            while (in.read(reinterpret_cast<char *>(buf.data()), buf_size)) {
+                mp::cpp_int chunk_value;
+                mp::import_bits(chunk_value, buf.begin(), buf.end(), 8, false);
+                auto res = math::mod_pow(chunk_value, key.exponent, key.modulus);
+                std::vector<uint8_t> out_buf(buf_size, 0);
+                mp::export_bits(res, out_buf.begin(), 8, false);
+                out.write(reinterpret_cast<const char *>(out_buf.data()), buf_size);
+            }
+            size_t bytes_read = in.gcount();
+            buf.back() = buf_size - bytes_read;
+            mp::cpp_int chunk_value;
+            mp::import_bits(chunk_value, buf.begin(), buf.end(), 8, false);
+            auto res = math::mod_pow(chunk_value, key.exponent, key.modulus);
+            std::vector<uint8_t> out_buf(buf_size, 0);
+            mp::export_bits(res, out_buf.begin(), 8, false);
+            out.write(reinterpret_cast<const char *>(out_buf.data()), buf_size);
+        };
+        return std::async(std::launch::async, std::move(task));
+    }
+
+    std::future<void> RSACryptoService::decrypt(const std::filesystem::path &in_path,
+                                                const std::filesystem::path &out_path) const {
+        std::ifstream in(in_path, std::ios::binary);
+        std::ofstream out(out_path, std::ios::binary);
+
+        if (!in.is_open())
+            throw std::invalid_argument("failed to open input file");
+        if (!out.is_open())
+            throw std::invalid_argument("failed to open output file");
+
+        auto task = [key = get_priv_key(), in = std::move(in), out = std::move(out)]() mutable {
+            auto buf_size = (mp::msb(key.modulus) + 1) / 8;
+            std::vector<uint8_t> buf(buf_size);
+
+            in.seekg(0, std::ios::end);
+            size_t file_size = in.tellg();
+            in.seekg(0);
+            size_t cur_size = 0;
+
+            while (in.read(reinterpret_cast<char *>(buf.data()), buf_size)) {
+                cur_size += in.gcount();
+                if (cur_size == file_size) break;
+                mp::cpp_int encrypted_value;
+                mp::import_bits(encrypted_value, buf.begin(), buf.end(), 8, false);
+
+                auto decrypted = math::mod_pow(encrypted_value, key.exponent, key.modulus);
+
+                std::vector<uint8_t> out_buf(buf_size, 0);
+                mp::export_bits(decrypted, out_buf.begin(), 8, false);
+
+                out.write(reinterpret_cast<const char *>(out_buf.data()), buf_size);
+            }
+            mp::cpp_int encrypted_value;
+            mp::import_bits(encrypted_value, buf.begin(), buf.end(), 8, false);
+            auto decrypted = math::mod_pow(encrypted_value, key.exponent, key.modulus);
+            std::vector<uint8_t> out_buf(buf_size, 0);
+            mp::export_bits(decrypted, out_buf.begin(), 8, false);
+            auto pad = out_buf.back();
+            out_buf.resize(buf_size - pad);
+            out.write(reinterpret_cast<const char *>(out_buf.data()), buf_size - pad);
+        };
+        return std::async(std::launch::async, std::move(task));
+    }
+
 
     void RSACryptoService::generate_key_pair() {
         _key_pair = _key_generator->generate_key_pair();

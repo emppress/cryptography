@@ -10,12 +10,16 @@ namespace crypto {
 }
 
 namespace crypto::math {
-    inline big_int mod_pow(big_int a, big_int pow, const big_int &mod) {
-        if (pow < 0) {
+    template<typename T, typename U>
+    inline T mod_pow(T a_, U pow_, const U &mod_) {
+        if (pow_ < 0) {
             throw std::invalid_argument("степень должна быть положительной");
         }
+        T a(a_.str());
+        T pow(pow_.str());
+        T mod(mod_.str());
         a = (a % mod + mod) % mod;
-        big_int res = 1;
+        T res = 1;
         while (pow > 0) {
             if (pow & 1) {
                 res = (res * a) % mod;

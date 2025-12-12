@@ -1,6 +1,8 @@
 #ifndef _RSA_H_
 #define _RSA_H_
 
+#include <future>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include "math.h"
@@ -57,6 +59,12 @@ namespace crypto::rsa {
         [[nodiscard]] big_int encrypt(const big_int &data) const;
 
         [[nodiscard]] big_int decrypt(const big_int &data) const;
+
+        [[nodiscard]] std::future<void> encrypt(const std::filesystem::path &in_path,
+                                                const std::filesystem::path &out_path) const;
+
+        [[nodiscard]] std::future<void> decrypt(const std::filesystem::path &in_path,
+                                                const std::filesystem::path &out_path) const;
 
         void generate_key_pair();
 

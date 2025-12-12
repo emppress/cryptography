@@ -5,6 +5,7 @@
 #include <bits/random.h>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
+#include "math.h"
 
 namespace crypto::primary {
     class IProbabilisticPrimalityTest {
@@ -62,7 +63,7 @@ namespace crypto::primary {
     class FermatTest final : public ProbabilisticPrimalityTest {
         [[nodiscard]] bool _is_primary(const big_int &n, const big_int &a) const override {
             if (math::gcd(a, n) == 1) {
-                return math::mod_pow(a, n - 1, n) == 1;
+                return math::mod_pow(a, big_int(n - 1), n) == 1;
             }
             return false;
         }
@@ -72,7 +73,7 @@ namespace crypto::primary {
         [[nodiscard]] bool _is_primary(const big_int &n, const big_int &a) const override {
             if (math::gcd(a, n) == 1) {
                 int jacobi = math::jacobi_symbol(a, n);
-                big_int pow = math::mod_pow(a, (n - 1) / 2, n);
+                big_int pow = math::mod_pow(a, big_int((n - 1) / 2), n);
                 if (jacobi == -1) return pow == n - 1;
                 return pow == jacobi;
             }
@@ -96,7 +97,7 @@ namespace crypto::primary {
                 if (x == n - 1) {
                     return true;
                 }
-                x = math::mod_pow(x, 2, n);
+                x = math::mod_pow(x, big_int(2), n);
             }
             return false;
         }

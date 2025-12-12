@@ -13,6 +13,7 @@ add_subdirectory(crypto_context)
 add_subdirectory(utils)
 add_subdirectory(rc4)
 add_subdirectory(idea)
+add_subdirectory(dh)
 
 add_library(interfaces INTERFACE)
 target_include_directories(interfaces INTERFACE ./interfaces)

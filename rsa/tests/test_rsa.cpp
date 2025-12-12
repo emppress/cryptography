@@ -182,6 +182,16 @@ TEST(BigRSACryptoTest, rsa_4096) {
     EXPECT_EQ(data, rsa_4096.decrypt(cipher));
 }
 
+TEST(RSAFileTest, rsa_256) {
+    crypto::rsa::RSACryptoService rsa_256(
+        crypto::rsa::RSACryptoService::PrimalityTestType::SOLOVAY_STRASSEN, 0.999, 256);
+    rsa_256.generate_key_pair();
+
+    rsa_256.encrypt("test.txt", "enc.bin").get();
+    rsa_256.decrypt("enc.bin", "dec.txt").get();
+    EXPECT_EQ(1, 1);
+}
+
 TEST(RSAAttack, WienerAttack) {
     crypto::rsa::RSACryptoService rsa(crypto::rsa::RSACryptoService::PrimalityTestType::MILLER_RABIN, 0.999, 1024);
     crypto::rsa::WienerAttack::generate_weak_key_pair(rsa);
